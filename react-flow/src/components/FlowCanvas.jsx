@@ -29,98 +29,86 @@ const nodeDefaults = {
 
 const initialNodes = [
   {
-    id: '1',
-    position: { x: 0, y: 0 }, 
-    type: 'table',
-    data: { 
-        TableName: 'User',
-        columns: [
-            {name: 'id', type: 'INT (PK)'},
-            {name: 'username', type: 'VARCHAR'},
-            {name: 'email', type: 'VARCHAR'},
-            {name: 'password', type: 'VARCHAR'},
-        ]
-     },
-  },
-  {
-    id: '2',
-    position: { x: 400, y: 200 }, 
-    type: 'table',
-    data: { 
-        TableName: 'access_token',
-        columns: [
-            {name: 'id', type: 'INT (PK)'},
-            {name: 'token', type: 'VARCHAR'},
-            {name: 'exp_at', type: 'VARCHAR'},
-            {name: 'isp_at', type: 'VARCHAR'},
-            {name: 'created_at', type: 'TIME_STAMP'},
-        ]
-     },
-  },
-  {
-    id: '3',
-    position: { x: 100, y: 100 }, 
+    id: 'users',
+    position: { x: 0, y: 0 },
     type: 'table',
     data: {
-        TableName: 'reset_password',
-        columns: [
-            {name: 'id', type: 'INT (PK)'},
-            {name: 'email', type: 'VARCHAR'},
-            {name: 'token', type: 'VARCHAR'},
-        ]
+      TableName: 'users',
+      columns: [
+        { name: 'id', type: 'INT (PK)' },
+        { name: 'username', type: 'VARCHAR' },
+        { name: 'email', type: 'VARCHAR' },
+      ],
+    },
+  },
+  {
+    id: 'product_items',
+    position: { x: 400, y: 100 },
+    type: 'table',
+    data: {
+      TableName: 'product_items',
+      columns: [
+        { name: 'id', type: 'INT (PK)' },
+        { name: 'users_id', type: 'INT (FK)' },
+        { name: 'product_id', type: 'INT (FK)' },
+        { name: 'quantity', type: 'INT' },
+      ],
+    },
+  },
+  {
+    id: 'items',
+    position: { x: 800, y: 0 },
+    type: 'table',
+    data: {
+      TableName: 'items',
+      columns: [
+        { name: 'id', type: 'INT (PK)' },
+        { name: 'name', type: 'VARCHAR' },
+        { name: 'price', type: 'DECIMAL' },
+      ],
     },
   },
 ];
-const initialEdges = [
-  { id: 'e1-n2', source: '1', target: '2', type: 'step', label: 'm to n', animated: true },
-  { id: 'e2-n3', source: '2', target: '3', type: 'smoothstep', label: 'n to m'}
-]
+const initialEdges = []
  
-export default function App({ nodes: externalNodes, setNodes, edge: externalEdges, setEdge}) {
-  const [nodes, setNodesState, onNodesChange] = useNodesState(externalNodes || initialNodes);
-  const [edges, setEdgesState, onEdgesChange] = useEdgesState(externalEdges || initialEdges);
+export default function App({ nodes, setNodes,onNodesChange, edges, setEdges, onEdgesChange}) {
   const [ variantBackground, setVariantBackground] = useState('cross')
 
+
   useEffect(() => {
-    if (externalNodes) {
-      setNodesState(externalNodes);
-    }
-  }, [externalNodes, setNodesState]);
-
-  useEffect(() => { 
-    if (externalEdges) {
-      setEdgesState(externalEdges);
-    }
-  }, [externalEdges, setEdgesState]);
-
+    console.log('NODES:', nodes);
+    console.log('EDGES (Relasi):', edges);
+  }, [nodes, edges]);
  
-  const onConnect = useCallback((params) => {
-    const newEdges = addEdge(params, edges)
+    const onConnect = useCallback(
+      (params) => {
+        const newEdge = {
+          ...params,
+          type: 'custom-edge',
+          animated: true,
+          data: { label: '1:N' }, // Opsional: Tambah label relasi
+        };
+        setEdges((eds) => addEdge(newEdge, eds));
+      },
+      [setEdges]
+    );
 
-    setEdgesState(newEdges)
+    const edgeTypes = {
+      'custom-edge' : CustomEdge
+    }
 
-    if(setEdge) setEdge(newEdges)
-  },[edges, setEdge, setEdgesState])
-
-  const edgeTypes = {
-    'custom-edge' : CustomEdge
-  }
-
-  // function addNode(tableName){
-  //   setNodes((nds)=> nds.concat({
-  //       id: (nds.length + 1).toString,
-  //       position: { x: (Math.random() * 400), y: (Math.random() * 400)},
-  //       type: 'table',
-  //       data: {
-  //           TableName: tableName,
-  //           columns: [
-  //               {name: 'id', type: 'INT (PK)'},
-  //               {name: 'created_at', type: 'TIME_STAMP'}
-  //           ]
-  //       }
-  //   }))
-  // }
-
+    const createRelationship = useCallback((sourceTable, sourceCol, targetTable, targetCol) => {
+        const newEdge = {
+          id: `${sourceTable}_${sourceCol}-to-${targetTable}_${targetCol}`,
+          source: sourceTable,
+          target: targetTable,
+          sourceHandle: `${sourceTable}_${sourceCol}_source`,
+          targetHandle: `${targetTable}_${targetCol}_target`,
+          type: 'custom-edge',
+          animated: true,
+        };
+        setEdges((eds) => addEdge(newEdge, eds));
+      }, [setEdges]);
 
   function NodeColor(node){
     switch (node.type){
@@ -148,7 +136,6 @@ export default function App({ nodes: externalNodes, setNodes, edge: externalEdge
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         colorMode='white'
-        fitView
       > 
         <Background variant= {variantBackground}/>
         <Controls/>

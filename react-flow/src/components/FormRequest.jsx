@@ -101,21 +101,125 @@ const CustomDropdown = ({ value, onChange, options, placeholder }) => {
 // Main Form
 export default function FormRequest({ onClose, onSubmit }) {
   const [tableName, setTableName] = useState("");
+  const [templateName, setTamplateName] = useState("Search Template")
   const [columns, setColumns] = useState([
-    { id: Date.now(), name: "", type: "text", nullable: false },
+    { id: Date.now(), name: "", type: "VARCHAR", nullable: false },
   ]);
+  const [isOpen, setIsOpen] = useState(false)
+  const dropDownRef = useRef(null)
 
   const dataTypes = [
-    { value: "text", label: "Text" },
-    { value: "number", label: "Number" },
-    { value: "date", label: "Date" },
-    { value: "boolean", label: "Boolean" },
+    { value: "VARCHAR", label: "VARCHAR" },
+    { value: "INT", label: "INT" },
+    { value: "DATE", label: "DATE" },
+    { value: "BOOLEAN", label: "BOOLEAN" },
+    { value: "DECIMAL", label: "DECIMAL" },
+  ];
+
+  console.log(columns.id)
+  const template = [
+    {
+      id: '1',
+      position: { x: 0, y: 0 },
+      type: 'table',
+      data: {
+        tableName: 'users',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'username', type: 'VARCHAR' },
+          { name: 'email', type: 'VARCHAR' },
+          { name: 'password', type: 'VARCHAR' },
+        ],
+      },
+    },
+    {
+      id: '2',
+      position: { x: 400, y: 100 },
+      type: 'table',
+      data: {
+        tableName: 'product_items',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'users_id', type: 'INT' },
+          { name: 'product_id', type: 'INT' },
+          { name: 'quantity', type: 'INT' },
+        ],
+      },
+    },
+    {
+      id: '3',
+      position: { x: 800, y: 0 },
+      type: 'table',
+      data: {
+        tableName: 'items',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'name', type: 'VARCHAR' },
+          { name: 'price', type: 'DECIMAL' },
+          { name: 'stock', type: 'INT' },
+          { name: 'sold', type: 'INT' },
+        ],
+      },
+    },
+    {
+      id: '4',
+      position: { x: 800, y: 0 },
+      type: 'table',
+      data: {
+        tableName: 'roles',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'name', type: 'VARCHAR' },
+        ],
+      },
+    },
+    {
+      id: '5',
+      position: { x: 800, y: 0 },
+      type: 'table',
+      data: {
+        tableName: 'roles_user',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'users_id', type: 'INT' },
+          { name: 'roles_id', type: 'INT' },
+        ],
+      },
+    },
+    {
+      id: '6',
+      position: { x: 800, y: 0 },
+      type: 'table',
+      data: {
+        tableName: 'order',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'users_id', type: 'INT' },
+          { name: 'total_price', type: 'DECIMAL' },
+          
+        ],
+      },
+    },
+    {
+      id: '7',
+      position: { x: 800, y: 0 },
+      type: 'table',
+      data: {
+        tableName: 'orders_item',
+        columns: [
+          { name: 'id', type: 'INT' },
+          { name: 'items_id', type: 'INT' },
+          { name: 'price', type: 'DECIMAL' },
+          { name: 'quantity', type: 'INT' },
+        ],
+      },
+    },
   ];
 
   const addColumn = () => {
-    setColumns([
+      setColumns([
       ...columns,
-      { id: Date.now(), name: "", type: "text", nullable: false },
+      { id: Date.now(), name: "", type: "VARCHAR", nullable: false },
     ]);
   };
 
@@ -139,11 +243,9 @@ export default function FormRequest({ onClose, onSubmit }) {
     const validColumns = columns.filter((col) => col.name.trim() !== "");
     if (validColumns.length === 0) return alert("Minimal satu kolom harus diisi!");
 
-    console.log(validColumns)
-
     onSubmit({
       tableName: tableName.trim(),
-      columns: validColumns.map(({ id, ...col }) => col),
+      columns: validColumns,
     });
     onClose();
   };
@@ -174,10 +276,86 @@ export default function FormRequest({ onClose, onSubmit }) {
           boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
         }}
       >
-        <h2 style={{ margin: "0 0 20px", fontSize: "20px", fontWeight: "600" }}>
+        <h2 style={{ margin: "0 0 20px", fontSize: "26px", fontWeight: "600" }}>
           Create Table
         </h2>
 
+        {/* Template*/}
+      <div ref={dropDownRef}  style={{position: "relative"}}>
+        <label style={{display: "flex", margin: "10px"}}>
+          <span style={{fontSize: "24px"}}>Tamplate</span>
+        </label>
+          <div
+          onClick={()=> setIsOpen(!isOpen)}
+            style={{
+              padding: "8px 12px",
+              marginBottom: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              background: "white",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: "14px",
+              userSelect: "none",
+              transition: "all 0.2s",
+            }}
+          >
+            <span>{templateName}</span>
+            <span style={{ fontSize: "12px", transition: "transform 0.2s" }}>
+            {isOpen ? "▲" : "▼"}
+            </span>
+          </div>
+
+          {isOpen && (
+          <div
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              background: "red",
+              border: "1px solid #ddd",
+              borderRadius: "6px",
+              marginTop: "4px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              zIndex: 150,
+              maxHeight: "200px",
+              overflowY: "auto",
+            }}
+          >
+            {template.map((template, index)=>(
+              <div
+                key={template.id}
+                value={template.data.tableName}
+                onClick={() => {
+                  setTamplateName(template.data.tableName)
+                  setIsOpen(false)
+                  setColumns(template.data.columns.map((col)=> ({
+                    ...col,
+                    id: Date.now() + Math.random()
+                  })))
+                  setTableName(template.data.tableName)
+                }}
+                style={{
+                  padding: "10px 12px",
+                  cursor: "pointer",
+                  background:"white",
+                  color:"black",  
+                  fontWeight:"normal",
+                  transition: "background 0.2s",
+                }}
+                >
+                  <span>
+                    {template.data.tableName}
+                  </span>
+                  <input type="checkbox" />
+              </div>
+            ))}
+          </div>
+           )}
+      </div>
         {/* Nama Tabel */}
         <label style={{ display: "block", marginBottom: "12px" }}>
           <span style={{ fontWeight: "500", fontSize: "14px" }}>Nama Tabel</span>
@@ -187,7 +365,7 @@ export default function FormRequest({ onClose, onSubmit }) {
             value={tableName}
             onChange={(e) => setTableName(e.target.value)}
             style={{
-              width: "100%",
+              width: "95%",
               padding: "10px 12px",
               border: "1px solid #ddd",
               borderRadius: "8px",
