@@ -75,10 +75,11 @@ export default function App({ nodes, setNodes,onNodesChange, edges, setEdges, on
   const [ variantBackground, setVariantBackground] = useState('cross')
 
 
-  useEffect(() => {
-    console.log('NODES:', nodes);
-    console.log('EDGES (Relasi):', edges);
-  }, [nodes, edges]);
+  
+  // useEffect(() => {
+  //   console.log('NODES:', nodes);
+  //   console.log('EDGES (Relasi):', edges);
+  // }, [nodes, edges]);
  
     const onConnect = useCallback(
       (params) => {
