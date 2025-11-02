@@ -1,113 +1,25 @@
 import React, { useState, useRef, useEffect } from "react";
-
-// Komponen Custom Dropdown
-const CustomDropdown = ({ value, onChange, options, placeholder }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const selectedLabel = options.find((opt) => opt.value === value)?.label || placeholder;
-
-  // Tutup saat klik di luar
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Keyboard support
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      setIsOpen(!isOpen);
-    } else if (e.key === "Escape") {
-      setIsOpen(false);
-    }
-  };
-
-  return (
-    <div ref={dropdownRef} style={{ position: "relative", width: "100%" }}>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-        style={{
-          padding: "8px 12px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          background: "white",
-          cursor: "pointer",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          fontSize: "14px",
-          userSelect: "none",
-          transition: "all 0.2s",
-          boxShadow: isOpen ? "0 0 0 2px #3b82f6" : "none",
-        }}
-      >
-        <span style={{ color: value ? "#000" : "#888" }}>{selectedLabel}</span>
-        <span style={{ fontSize: "12px", transition: "transform 0.2s" }}>
-          {isOpen ? "▲" : "▼"}
-        </span>
-      </div>
-
-      {isOpen && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            background: "white",
-            border: "1px solid #ddd",
-            borderRadius: "6px",
-            marginTop: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            zIndex: 10,
-            maxHeight: "200px",
-            overflowY: "auto",
-          }}
-        >
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              style={{
-                padding: "10px 12px",
-                cursor: "pointer",
-                background: value === opt.value ? "#ebf5ff" : "transparent",
-                color: value === opt.value ? "#1d4ed8" : "#000",
-                fontWeight: value === opt.value ? "600" : "normal",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => (e.target.style.background = "#f3f4f6")}
-              onMouseLeave={(e) => (e.target.style.background = value === opt.value ? "#ebf5ff" : "transparent")}
-            >
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import CustomDropdown from "./DropDown";
 
 // Main Form
-export default function FormRequest({ onClose, onSubmit }) {
-  const [tableName, setTableName] = useState("");
-  const [templateName, setTamplateName] = useState("Search Template")
-  const [columns, setColumns] = useState([
-    { id: Date.now(), name: "", type: "VARCHAR", nullable: false },
-  ]);
-  const [isOpen, setIsOpen] = useState(false)
-  const dropDownRef = useRef(null)
+export default function FormRequest({ onClose, onSubmit, nodes }) {
+  const [templateName, setTamplateName] = useState("Search Template");
+  const [selectedTabel, setSelectedTabel] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropDownRef = useRef(null);
+  const [allTableColumns, setAllTableColumns] = useState([]); // dari addColumnManyTabel
+  const [currentStep, setCurrentStep] = useState(0); // tabel ke-0 (users)
+  const [ validationNodes, setValidationNodes] = useState([{
+    message: "",
+    columns: {
+      message: ""
+    }
+  }])
 
+  // console.log(columns);
+  // console.log(allTableColumns);
+  // console.log(selectedTabel);
+  // console.log(validationNodes)
   const dataTypes = [
     { value: "VARCHAR", label: "VARCHAR" },
     { value: "INT", label: "INT" },
@@ -115,139 +27,261 @@ export default function FormRequest({ onClose, onSubmit }) {
     { value: "BOOLEAN", label: "BOOLEAN" },
     { value: "DECIMAL", label: "DECIMAL" },
   ];
+  // console.log(selectedTabel);
+  const indexTypes = [
+    { value: "@id", label: "@id"},
+    { value: "@uuid", label: "@uuid"},
+    { value: "@unique",label: "@unique"},
+    { value: "@primary",  label: "@primary"},
+    { value: "@hashed", label: "@hashed"},
+    { value: "@index", label: "@index"},
+    { value: "@FK", label: "@FK"},
+  ];
 
-  console.log(columns.id)
+  // console.log(columns.id);
   const template = [
     {
-      id: '1',
+      id: "1",
       position: { x: 0, y: 0 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'users',
+        tableName: "users",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'username', type: 'VARCHAR' },
-          { name: 'email', type: 'VARCHAR' },
-          { name: 'password', type: 'VARCHAR' },
+          { name: "id", type: "INT", index: "@id" },
+          { name: "username", type: "VARCHAR", index: "" },
+          { name: "email", type: "VARCHAR", index: "@unique" },
+          { name: "password", type: "VARCHAR", index: "@hashed" },
         ],
       },
     },
     {
-      id: '2',
+      id: "2",
       position: { x: 400, y: 100 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'product_items',
+        tableName: "product_items",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'users_id', type: 'INT' },
-          { name: 'product_id', type: 'INT' },
-          { name: 'quantity', type: 'INT' },
+          { name: "id", type: "INT", index: "@id" },
+          { name: "users_id", type: "INT", index: "@FK" },
+          { name: "product_id", type: "INT", index: "@FK" },
+          { name: "quantity", type: "INT" },
         ],
       },
     },
     {
-      id: '3',
+      id: "3",
       position: { x: 800, y: 0 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'items',
+        tableName: "items",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'name', type: 'VARCHAR' },
-          { name: 'price', type: 'DECIMAL' },
-          { name: 'stock', type: 'INT' },
-          { name: 'sold', type: 'INT' },
+          { name: "id", type: "INT", index: "@id" },
+          { name: "name", type: "VARCHAR" },
+          { name: "price", type: "DECIMAL" },
+          { name: "stock", type: "INT" },
+          { name: "sold", type: "INT" },
         ],
       },
     },
     {
-      id: '4',
+      id: "4",
       position: { x: 800, y: 0 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'roles',
+        tableName: "roles",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'name', type: 'VARCHAR' },
+          { name: "id", type: "INT", index: "@id" },
+          { name: "name", type: "VARCHAR" },
         ],
       },
     },
     {
-      id: '5',
+      id: "5",
       position: { x: 800, y: 0 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'roles_user',
+        tableName: "roles_user",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'users_id', type: 'INT' },
-          { name: 'roles_id', type: 'INT' },
+          { name: "id", type: "INT", index: "@id" },
+          { name: "users_id", type: "INT", index: "@FK" },
+          { name: "roles_id", type: "INT", index: "@FK" },
         ],
       },
     },
     {
-      id: '6',
+      id: "6",
       position: { x: 800, y: 0 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'order',
+        tableName: "order",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'users_id', type: 'INT' },
-          { name: 'total_price', type: 'DECIMAL' },
-          
+          { name: "id", type: "INT", index: "@id" },
+          { name: "users_id", type: "INT", index: "@FK" },
+          { name: "total_price", type: "DECIMAL" },
         ],
       },
     },
     {
-      id: '7',
+      id: "7",
       position: { x: 800, y: 0 },
-      type: 'table',
+      type: "table",
       data: {
-        tableName: 'orders_item',
+        tableName: "orders_item",
         columns: [
-          { name: 'id', type: 'INT' },
-          { name: 'items_id', type: 'INT' },
-          { name: 'price', type: 'DECIMAL' },
-          { name: 'quantity', type: 'INT' },
+          { name: "id", type: "INT", index: "@id" },
+          { name: "items_id", type: "INT", index: "@FK" },
+          { name: "price", type: "DECIMAL" },
+          { name: "quantity", type: "INT" },
         ],
       },
     },
   ];
 
-  const addColumn = () => {
-      setColumns([
-      ...columns,
-      { id: Date.now(), name: "", type: "VARCHAR", nullable: false },
-    ]);
-  };
-
-  const removeColumn = (id) => {
-    if (columns.length > 1) {
-      setColumns(columns.filter((col) => col.id !== id));
-    }
-  };
-
-  const updateColumn = (id, field, value) => {
-    setColumns(
-      columns.map((col) =>
-        col.id === id ? { ...col, [field]: value } : col
-      )
-    );
-  };
-
   const handleSubmit = () => {
-    if (!tableName.trim()) return alert("Nama tabel wajib diisi!");
+    console.log(nodes)
 
-    const validColumns = columns.filter((col) => col.name.trim() !== "");
-    if (validColumns.length === 0) return alert("Minimal satu kolom harus diisi!");
+    const duplicateTables = selectedTabel.filter((table) =>
+      nodes.find((node) => node.data.TableName === table.name)
+    );
+
+    if (duplicateTables.length > 0) {
+      setValidationNodes(
+        duplicateTables.map((table) => ({
+          message: `Table ${table.name} already exists!`,
+        }))
+      );
+      return
+    }
+
+    if (!selectedTabel.length) {
+      setValidationNodes([{
+        message: "This field is not empty!"
+      }])
+      return
+    }
+
+    const validColumns = allTableColumns.filter((col) =>
+      col.map((col) => col.name.trim() !== "")
+    );
+    if(validColumns.length === 0){
+      setValidationNodes([{
+        columns: {
+          message: "This field is not empty!"
+        }
+      }])
+      return
+    }
 
     onSubmit({
-      tableName: tableName.trim(),
+      tableName: selectedTabel,
       columns: validColumns,
     });
     onClose();
+  };
+
+  const addColumnToCurrentStep = () => {
+    const newCol = {
+      id: `${Date.now()}-${Math.random()}`,
+      name: "",
+      type: "VARCHAR",
+      index: "",
+      nullable: false,
+    };
+
+    setAllTableColumns((prev) => {
+      const newTables = [...prev];
+
+      if (!Array.isArray(newTables[currentStep])) {
+        newTables[currentStep] = [];
+      }
+
+      newTables[currentStep] = [...newTables[currentStep], newCol];
+      return newTables;
+    });
+  };
+
+  const updateColumnInStep = (stepIdx, colId, field, value) => {
+    setAllTableColumns((prev) => {
+      const newTables = [...prev];
+      newTables[stepIdx] = newTables[stepIdx].map((col) =>
+        col.id === colId ? { ...col, [field]: value } : col
+      );
+      return newTables;
+    });
+  };
+
+  // Hapus kolom
+  const removeColumnInStep = (stepIdx, colId) => {
+    setAllTableColumns((prev) => {
+      const newTables = [...prev];
+      newTables[stepIdx] = newTables[stepIdx].filter((col) => col.id !== colId);
+      return newTables;
+    });
+  };
+
+  const removeTableInStep = (stepIdx) => {
+    setAllTableColumns((prev) => {
+      const newTables = [...prev];
+      newTables.splice(stepIdx, 1);
+      return newTables;
+    });
+
+    setSelectedTabel((prev) => {
+      const newTables = [...prev];
+      newTables.splice(stepIdx, 1);
+      return newTables;
+    });
+
+    setCurrentStep(stepIdx - 1 >= 0 ? stepIdx - 1 : 0);
+  };
+
+  const addColumnManyTabel = () => {
+
+    const result = selectedTabel.map((tabel) => {
+      const matchedTemplate = template.find(
+        (temp) => temp.data.tableName === tabel.name
+      );
+
+      if (matchedTemplate) {
+        return matchedTemplate.data.columns.map((col) => ({
+          name: col.name,
+          type: col.type,
+          index: col.index
+        }));
+      }
+
+      return [];
+    });
+
+
+    const dataResult = result.map((tableCols) =>
+      tableCols.map((col) => ({
+        ...col,
+        id: `${Date.now()}-${Math.random()}`, // beri ID unik
+        nullable: false,
+      }))
+    );
+    // console.log(dataResult);
+
+    setAllTableColumns(dataResult);
+
+    // console.log(result);
+    setIsOpen(false);
+    return result;
+  };
+
+  const updateTableName = (tableName, isChecked) => {
+    setSelectedTabel((prev) => {
+      if (isChecked) {
+        // Tambahkan jika belum ada
+        if (!prev.some((t) => t.name === tableName)) {
+          return [...prev, { name: tableName }];
+        }
+        return prev;
+      } else {
+        return prev.filter((t) => t.name !== tableName);
+      }
+    });
   };
 
   return (
@@ -270,23 +304,49 @@ export default function FormRequest({ onClose, onSubmit }) {
           backgroundColor: "white",
           padding: "24px 40px",
           borderRadius: "12px",
-          minWidth: "560px",
+          minWidth: "45vw",
+          maxWidth: "45vw",
           maxHeight: "85vh",
           overflowY: "auto",
           boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
         }}
       >
-        <h2 style={{ margin: "0 0 20px", fontSize: "26px", fontWeight: "600" }}>
-          Create Table
-        </h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            position: "relative",
+            alignItems: "center",
+          }}
+        >
+          <h2
+            style={{ margin: "0 0 20px", fontSize: "26px", fontWeight: "600" }}
+          >
+            Create Table
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              padding: "10px 15px",
+              color: "white",
+              right: 0,
+              border: "none",
+              backgroundColor: "#ef4444",
+              borderRadius: "6px",
+            }}
+          >
+            X
+          </button>
+        </div>
 
         {/* Template*/}
-      <div ref={dropDownRef}  style={{position: "relative"}}>
-        <label style={{display: "flex", margin: "10px"}}>
-          <span style={{fontSize: "24px"}}>Tamplate</span>
-        </label>
+        <div ref={dropDownRef} style={{ position: "relative" }}>
+          <label style={{ display: "flex", margin: "10px" }}>
+            <span style={{ fontSize: "24px" }}>Tamplate</span>
+          </label>
           <div
-          onClick={()=> setIsOpen(!isOpen)}
+            onClick={() => setIsOpen(!isOpen)}
             style={{
               padding: "8px 12px",
               marginBottom: "10px",
@@ -304,66 +364,143 @@ export default function FormRequest({ onClose, onSubmit }) {
           >
             <span>{templateName}</span>
             <span style={{ fontSize: "12px", transition: "transform 0.2s" }}>
-            {isOpen ? "▲" : "▼"}
+              {isOpen ? "▲" : "▼"}
             </span>
           </div>
 
           {isOpen && (
-          <div
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 0,
-              background: "red",
-              border: "1px solid #ddd",
-              borderRadius: "6px",
-              marginTop: "4px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              zIndex: 150,
-              maxHeight: "200px",
-              overflowY: "auto",
-            }}
-          >
-            {template.map((template, index)=>(
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "white",
+                display: "flex",
+                height: "250px",
+                flexDirection: "column",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                marginTop: "4px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                zIndex: 150,
+              }}
+            >
               <div
-                key={template.id}
-                value={template.data.tableName}
-                onClick={() => {
-                  setTamplateName(template.data.tableName)
-                  setIsOpen(false)
-                  setColumns(template.data.columns.map((col)=> ({
-                    ...col,
-                    id: Date.now() + Math.random()
-                  })))
-                  setTableName(template.data.tableName)
-                }}
                 style={{
-                  padding: "10px 12px",
-                  cursor: "pointer",
-                  background:"white",
-                  color:"black",  
-                  fontWeight:"normal",
-                  transition: "background 0.2s",
+                  maxHeight: "200px",
+                  overflowY: "auto",
                 }}
-                >
-                  <span>
-                    {template.data.tableName}
-                  </span>
-                  <input type="checkbox" />
+              >
+                {template.map((template, index) => (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    <div
+                      key={template.id}
+                      value={template.data.tableName}
+                      onClick={() => {
+                        setTamplateName(template.data.tableName);
+                        setIsOpen(false);
+                        const singleTableColumns = template.data.columns.map(
+                          (col) => ({
+                            ...col,
+                            id: Date.now() + Math.random(),
+                            nullable: false, // tambah default kalau belum ada
+                          })
+                        );
+                        setSelectedTabel([{ name: template.data.tableName }]);
+                        setAllTableColumns([singleTableColumns]);
+                      }}
+                      style={{
+                        padding: "10px 12px",
+                        cursor: "pointer",
+                        color: "black",
+                        fontWeight: "normal",
+                        width: "100%",
+                        transition: "background 0.2s",
+                      }}
+                    >
+                      <span>{template.data.tableName}</span>
+                    </div>
+                    <div style={{ margin: "10px" }}>
+                      <input
+                        type="checkbox"
+                        value={template.data.tableName}
+                        checked={selectedTabel.some(
+                          (t) => t.name === template.data.tableName
+                        )}
+                        onChange={(e) =>
+                          updateTableName(
+                            template.data.tableName,
+                            e.target.checked
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-           )}
-      </div>
+              <div
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  bottom: "10px",
+                  display: "flex",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  onClick={() => {
+                    setSelectedTabel([]);
+                    setIsOpen(false);
+                  }}
+                  style={{
+                    padding: "10px 25px",
+                    border: "none",
+                    borderRadius: "6px",
+                    backgroundColor: "#ef4444",
+                  }}
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => addColumnManyTabel()}
+                  style={{
+                    backgroundColor: "#22c55e",
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "6px",
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         {/* Nama Tabel */}
-        <label style={{ display: "block", marginBottom: "12px" }}>
-          <span style={{ fontWeight: "500", fontSize: "14px" }}>Nama Tabel</span>
+        <label style={{ display: "flex",flexDirection: "column", marginBottom: "12px" }}>
+          <span style={{ fontWeight: "500", fontSize: "14px" }}>
+            Nama Tabel
+          </span>
           <input
             type="text"
             placeholder="users, products, orders..."
-            value={tableName}
-            onChange={(e) => setTableName(e.target.value)}
+            value={selectedTabel[currentStep]?.name || ""}
+            onChange={(e) => {
+              const updatedTabel = [...selectedTabel];
+              updatedTabel[currentStep] = {
+                ...updatedTabel[currentStep], // pertahankan properti lain
+                name: e.target.value,
+              };
+              setSelectedTabel(updatedTabel);
+            }}
             style={{
               width: "95%",
               padding: "10px 12px",
@@ -373,14 +510,25 @@ export default function FormRequest({ onClose, onSubmit }) {
               fontSize: "14px",
             }}
           />
+          <span style={{ padding: "5px 10px", fontWeight: "500", fontSize: "16px", color: "#ef4444" }}>
+            {/* tesing */}
+            { validationNodes[currentStep]?.message }
+          </span>
         </label>
 
         {/* Kolom Dinamis */}
         <div style={{ marginBottom: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "12px",
+            }}
+          >
             <strong style={{ fontSize: "14px" }}>Kolom</strong>
             <button
-              onClick={addColumn}
+              onClick={addColumnToCurrentStep}
               style={{
                 background: "#3b82f6",
                 color: "white",
@@ -401,114 +549,229 @@ export default function FormRequest({ onClose, onSubmit }) {
             </button>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {columns.map((col, idx) => (
+          <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
+            {/* Header: Nama Tabel & Progress */}
+            <div style={{ margenBottom: "20px" }}>
               <div
-                key={col.id}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "2fr 1.2fr 1fr auto",
-                  gap: "10px",
+                  marginBottom: "10px",
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "8px",
-                  background: "#f9f9f9",
-                  borderRadius: "8px",
                 }}
               >
-                {/* Nama Kolom */}
-                <input
-                  type="text"
-                  placeholder={`Kolom ${idx + 1}`}
-                  value={col.name}
-                  onChange={(e) => updateColumn(col.id, "name", e.target.value)}
-                  style={{
-                    padding: "8px 10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    fontSize: "14px",
+                <h2 style={{ margin: "0 0 8px" }}>
+                  Tabel:{" "}
+                  <strong>
+                    {selectedTabel[currentStep]?.name || "Belum Tersedia"}
+                  </strong>
+                </h2>
+                <button
+                  onClick={() => {
+                    removeTableInStep(currentStep);
                   }}
-                />
-
-                {/* Custom Dropdown */}
-                <CustomDropdown
-                  value={col.type}
-                  onChange={(val) => updateColumn(col.id, "type", val)}
-                  options={dataTypes}
-                  placeholder="Pilih tipe..."
-                />
-
-                {/* Nullable */}
-                <label
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    fontSize: "13px",
-                    cursor: "pointer",
+                    padding: "8px 15px",
+                    borderRadius: "6px",
+                    backgroundColor: "#ef4444",
+                    border: "none",
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={col.nullable}
-                    onChange={(e) => updateColumn(col.id, "nullable", e.target.checked)}
-                    style={{ cursor: "pointer" }}
-                  />
-                  <span>Nullable</span>
-                </label>
+                  {" "}
+                  Delete{" "}
+                </button>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ fontSize: "14px", color: "#666" }}>
+                  Step {currentStep + 1} of {allTableColumns.length}
+                </span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {allTableColumns.map((_, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setCurrentStep(idx)}
+                      style={{
+                        width: "32px",
+                        height: "8px",
+                        borderRadius: "4px",
+                        background: idx === currentStep ? "#22c55e" : "#e5e7eb",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
 
-                {/* Hapus */}
+            {/* Kolom Tabel Saat Ini */}
+            {allTableColumns[currentStep]?.length > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                    overflowY: "auto",
+                  width: "100%",
+                }}
+              >
+                {allTableColumns[currentStep].map((col, idx) => (
+                  <div
+                    key={col.id}
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      width: "max-content",
+                      gap: "15px",
+                      alignItems: "center",
+                      padding: "8px",
+                      background: "#f9f9f9",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    {/* Nama Kolom */}
+                    <input
+                      type="text"
+                      value={col.name}
+                      onChange={(e) =>
+                        updateColumnInStep(
+                          currentStep,
+                          col.id,
+                          "name",
+                          e.target.value
+                        )
+                      }
+                      style={{
+                        padding: "8px 10px",
+                        border: "1px solid #ddd",
+                        borderRadius: "6px",
+                      }}
+                    />
+                    {/* Tipe */}
+                    <CustomDropdown
+                      value={col.type}
+                      onChange={(val) =>
+                        updateColumnInStep(currentStep, col.id, "type", val)
+                      }
+                      options={dataTypes}
+                    />
+                    <CustomDropdown
+                      value={col.index}
+                      onChange={(val) =>
+                        updateColumnInStep(currentStep, col.id, "index", val)
+                      }
+                      options={indexTypes}
+                    />
+
+                    {/* Nullable */}
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={col.nullable || false}
+                        onChange={(e) =>
+                          updateColumnInStep(
+                            currentStep,
+                            col.id,
+                            "nullable",
+                            e.target.checked
+                          )
+                        }
+                      />
+                      <span>Nullable</span>
+                    </label>
+
+                    {/* Hapus Kolom */}
+                    <button
+                      onClick={() => removeColumnInStep(currentStep, col.id)}
+                      disabled={allTableColumns[currentStep].length === 1}
+                      style={{
+                        background:
+                          allTableColumns[currentStep].length === 1
+                            ? "#fee2e2"
+                            : "#ef4444",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        width: "32px",
+                        height: "32px",
+                      }}
+                    >
+                      −
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "#999", textAlign: "center" }}>
+                {validationNodes[currentStep]?.columns?.message || "Please add a column"}
+              </p>
+            )}
+
+            {/* Navigasi */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: "24px",
+              }}
+            >
+              <button
+                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                disabled={currentStep === 0}
+                style={{
+                  padding: "10px 20px",
+                  background: currentStep === 0 ? "#e5e7eb" : "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: currentStep === 0 ? "not-allowed" : "pointer",
+                }}
+              >
+                Sebelumnya
+              </button>
+
+              {currentStep < allTableColumns.length - 1 ? (
                 <button
-                  onClick={() => removeColumn(col.id)}
-                  disabled={columns.length === 1}
+                  onClick={() => setCurrentStep(currentStep + 1)}
                   style={{
-                    background: columns.length === 1 ? "#fee2e2" : "#ef4444",
+                    padding: "10px 20px",
+                    background: "#3b82f6",
                     color: "white",
                     border: "none",
                     borderRadius: "6px",
-                    width: "32px",
-                    height: "32px",
-                    cursor: columns.length === 1 ? "not-allowed" : "pointer",
-                    fontWeight: "bold",
-                    opacity: columns.length === 1 ? 0.6 : 1,
                   }}
                 >
-                  −
+                  Selanjutnya
                 </button>
-              </div>
-            ))}
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  style={{
+                    padding: "10px 20px",
+                    background: "#22c55e",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                  }}
+                >
+                  Submit Semua
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Tombol Aksi */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "10px 20px",
-              background: "#ef4444",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "500",
-            }}
-          >
-            Batal
-          </button>
-          <button
-            onClick={handleSubmit}
-            style={{
-              padding: "10px 20px",
-              background: "#22c55e",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "500",
-            }}
-          >
-            Buat Tabel
-          </button>
         </div>
       </div>
     </div>
