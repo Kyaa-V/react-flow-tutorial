@@ -17,6 +17,7 @@ import { ReactFlow,
 import '@xyflow/react/dist/style.css';
 import { CustomEdge } from '../CustomEdge';
 import TableNode from './TableNode';
+import { EdgeWithToolbar } from '../EdgeWithTollbars';
 
 
 const nodeTypes= {
@@ -95,7 +96,8 @@ export default function App({ nodes, setNodes,onNodesChange, edges, setEdges, on
     );
 
     const edgeTypes = {
-      'custom-edge' : CustomEdge
+      'custom-edge' : CustomEdge,
+      'edge-with-toolbars': EdgeWithToolbar
     }
 
     const createRelationship = useCallback((sourceTable, sourceCol, targetTable, targetCol) => {

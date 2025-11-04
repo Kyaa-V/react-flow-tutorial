@@ -138,7 +138,7 @@ export default function FormRequest({ onClose, onSubmit, nodes }) {
   ];
 
   const handleSubmit = () => {
-    console.log(nodes)
+    // console.log(nodes)
 
     const duplicateTables = selectedTabel.filter((table) =>
       nodes.find((node) => node.data.TableName === table.name)
