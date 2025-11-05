@@ -148,18 +148,18 @@ export default function TableNode({ data, id, selected }) {
                   borderBottom: "1px dashed #e2e8f0",
                 }}
               >
-                {col.index === "@FK" ? (
+                {col.index === "@FK" || col.index === "@id" ? (
                   <Handle
                     type="target"
                     position={Position.Left}
-                    id={targetHandleId}
+                    id={`${data.TableName}_${col.name}_target`}
                     style={{
                       top: topOffset,
                       position: "absolute",
                       transform: "translateX(-50%)",
                       background: "#ef4444",
-                      width: 4,
-                      height: 4,
+                      width: 6,
+                      height: 6,
                       borderRadius: "50%",
                     }}
                   />
@@ -176,21 +176,23 @@ export default function TableNode({ data, id, selected }) {
                   <strong>{col.index}</strong>
                   <span> ({col.type})</span>
                 </span>
-                {col.index === "@id" ? (
+                {col.index === "@id" || col.index === "@FK" ? (
+                  <>
                   <Handle
                     type="source"
                     position={Position.Right}
-                    id={sourceHandleId}
+                    id={`${data.TableName}_${col.name}_source`}
                     style={{
                       top: topOffset,
                       position: "absolute",
                       transform: "translateX(50%)",
                       background: "#10b981",
-                      width: 4,
-                      height: 4,
+                      width: 6,
+                      height: 6,
                       borderRadius: "50%",
                     }}
                   />
+                  </>
                 ): null}
               </div>
             );

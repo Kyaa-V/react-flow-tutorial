@@ -12,12 +12,12 @@ import { ReactFlow,
   ControlButton,
   Panel,
   useNodesState,
-  useEdgesState
+  useEdgesState,
+  ConnectionMode
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { CustomEdge } from '../CustomEdge';
 import TableNode from './TableNode';
-import { EdgeWithToolbar } from '../EdgeWithTollbars';
 
 
 const nodeTypes= {
@@ -97,21 +97,20 @@ export default function App({ nodes, setNodes,onNodesChange, edges, setEdges, on
 
     const edgeTypes = {
       'custom-edge' : CustomEdge,
-      'edge-with-toolbars': EdgeWithToolbar
     }
 
-    const createRelationship = useCallback((sourceTable, sourceCol, targetTable, targetCol) => {
-        const newEdge = {
-          id: `${sourceTable}_${sourceCol}-to-${targetTable}_${targetCol}`,
-          source: sourceTable,
-          target: targetTable,
-          sourceHandle: `${sourceTable}_${sourceCol}_source`,
-          targetHandle: `${targetTable}_${targetCol}_target`,
-          type: 'custom-edge',
-          animated: true,
-        };
-        setEdges((eds) => addEdge(newEdge, eds));
-      }, [setEdges]);
+    // const createRelationship = useCallback((sourceTable, sourceCol, targetTable, targetCol) => {
+    //     const newEdge = {
+    //       id: `${sourceTable}_${sourceCol}-to-${targetTable}_${targetCol}`,
+    //       source: sourceTable,
+    //       target: targetTable,
+    //       sourceHandle: `${sourceTable}_${sourceCol}_source`,
+    //       targetHandle: `${targetTable}_${targetCol}_target`,
+    //       type: 'custom-edge',
+    //       animated: true,
+    //     };
+    //     setEdges((eds) => addEdge(newEdge, eds));
+    //   }, [setEdges]);
 
   function NodeColor(node){
     switch (node.type){
@@ -139,6 +138,7 @@ export default function App({ nodes, setNodes,onNodesChange, edges, setEdges, on
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         colorMode='white'
+        connectionMode={ConnectionMode.Loose}
       > 
         <Background variant= {variantBackground}/>
         <Controls/>
