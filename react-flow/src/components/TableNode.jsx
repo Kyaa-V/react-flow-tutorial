@@ -1,6 +1,11 @@
-// TableNode.jsx
 import React, { useState } from "react";
-import { Handle, NodeResizer, Position, NodeToolbar } from "@xyflow/react";
+import {
+  Handle,
+  NodeResizer,
+  Position,
+  NodeToolbar,
+  useReactFlow,
+} from "@xyflow/react";
 
 export default function TableNode({ data, id, selected }) {
   const { TableName, columns } = data;
@@ -8,7 +13,15 @@ export default function TableNode({ data, id, selected }) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editPosition, setEditPosition] = useState({ x: 0, y: 0 });
 
-  // console.log();
+  const { getEdges } = useReactFlow();
+  const edges = getEdges();
+
+  console.log(edges);
+  const handleEditOptionsClick = (e) => {
+    e.stopPropagation();
+    setShowEditOptions(true);
+    setEditPosition({ x: e.clientX, y: e.clientY });
+  };
 
   const randomColor = React.useMemo(() => {
     const hue = Math.floor(Math.random() * 360);
@@ -24,11 +37,11 @@ export default function TableNode({ data, id, selected }) {
 
   // Handle form submit
   const handleFormSubmit = (updatedData) => {
-    console.log('updatedData handle submit', updatedData)
+    console.log("updatedData handle submit", updatedData);
     // Update node data here
     if (data.onEdit) {
       data.onEdit(id, updatedData);
-      console.log(`updatedData: ${JSON.stringify(updatedData)}`)
+      console.log(`updatedData: ${JSON.stringify(updatedData)}`);
     }
     setShowEditForm(false);
   };
@@ -137,6 +150,16 @@ export default function TableNode({ data, id, selected }) {
             const rowHeight = 30;
             const topOffset = idx * rowHeight + rowHeight + 10;
 
+            // Cek apakah kolom ini punya koneksi masuk (sebagai target)
+            const hasTargetConnection = edges.some(
+              (edge) => edge.targetHandle === targetHandleId
+            );
+
+            // Cek apakah kolom ini punya koneksi keluar (sebagai source)
+            const hasSourceConnection = edges.some(
+              (edge) => edge.sourceHandle === sourceHandleId
+            );
+
             return (
               <div
                 key={idx}
@@ -148,22 +171,40 @@ export default function TableNode({ data, id, selected }) {
                   borderBottom: "1px dashed #e2e8f0",
                 }}
               >
-                {col.index === "@FK" || col.index === "@id" ? (
+                {/* 🟥 HANDLE TARGET: hanya tampil kalau ada relasi ke sini */}
+                {(col.index === "@FK" || col.index === "@id") &&
+                  hasTargetConnection ? (
+                    <Handle
+                      type="target"
+                      position={Position.Left}
+                      id={targetHandleId}
+                      style={{
+                        top: topOffset,
+                        position: "absolute",
+                        transform: "translateX(-50%)",
+                        background: "#ef4444",
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                      }}
+                    />
+                  ) :                     
                   <Handle
-                    type="target"
-                    position={Position.Left}
-                    id={`${data.TableName}_${col.name}_target`}
-                    style={{
-                      top: topOffset,
-                      position: "absolute",
-                      transform: "translateX(-50%)",
-                      background: "#ef4444",
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                    }}
-                  />
-                ): null}
+                      type="target"
+                      position={Position.Left}
+                      id={targetHandleId}
+                      style={{
+                        top: topOffset,
+                        position: "absolute",
+                        transform: "translateX(-50%)",
+                        background: "#ef4444",
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                      }}
+                    />}
+
+                {/* Nama kolom */}
                 <span
                   style={{
                     display: "flex",
@@ -176,24 +217,25 @@ export default function TableNode({ data, id, selected }) {
                   <strong>{col.index}</strong>
                   <span> ({col.type})</span>
                 </span>
-                {col.index === "@id" || col.index === "@FK" ? (
-                  <>
-                  <Handle
-                    type="source"
-                    position={Position.Right}
-                    id={`${data.TableName}_${col.name}_source`}
-                    style={{
-                      top: topOffset,
-                      position: "absolute",
-                      transform: "translateX(50%)",
-                      background: "#10b981",
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                    }}
-                  />
-                  </>
-                ): null}
+
+                {/* 🟩 HANDLE SOURCE: hanya tampil kalau belum punya target relasi */}
+                {(col.index === "@id" || col.index === "@FK") &&
+                  !hasTargetConnection && (
+                    <Handle
+                      type="source"
+                      position={Position.Right}
+                      id={sourceHandleId}
+                      style={{
+                        top: topOffset,
+                        position: "absolute",
+                        transform: "translateX(50%)",
+                        background: "#10b981",
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                      }}
+                    />
+                  )}
               </div>
             );
           })}
@@ -218,10 +260,10 @@ export default function TableNode({ data, id, selected }) {
 function EditForm({ nodeData, position, onSubmit, onClose }) {
   const [formData, setFormData] = useState({
     TableName: nodeData.TableName || "",
-    columns: nodeData.columns ? [...nodeData.columns] : []
+    columns: nodeData.columns ? [...nodeData.columns] : [],
   });
 
-  console.log(formData)
+  console.log(formData);
 
   // FIXED: Handle submit dengan proper event prevention
   const handleSubmit = (e) => {
@@ -233,15 +275,15 @@ function EditForm({ nodeData, position, onSubmit, onClose }) {
 
   // FIXED: updateColumn dengan proper state update
   const updateColumn = (index, field, value) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const updatedColumns = [...prev.columns];
       updatedColumns[index] = {
         ...updatedColumns[index],
-        [field]: value
+        [field]: value,
       };
       return {
         ...prev,
-        columns: updatedColumns
+        columns: updatedColumns,
       };
     });
     console.log(`Updated column ${index}, ${field}:`, value);
@@ -250,17 +292,17 @@ function EditForm({ nodeData, position, onSubmit, onClose }) {
   // FIXED: addColumn dengan default values yang proper
   const addColumn = (e) => {
     e.stopPropagation();
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       columns: [
         ...prev.columns,
-        { 
-          name: `column_${prev.columns.length + 1}`, 
-          type: "varchar", 
-          index: "", 
-          nullable: true 
-        }
-      ]
+        {
+          name: `column_${prev.columns.length + 1}`,
+          type: "varchar",
+          index: "",
+          nullable: true,
+        },
+      ],
     }));
     console.log("Added new column");
   };
@@ -272,10 +314,10 @@ function EditForm({ nodeData, position, onSubmit, onClose }) {
       alert("Table must have at least one column");
       return;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      columns: prev.columns.filter((_, i) => i !== index)
+      columns: prev.columns.filter((_, i) => i !== index),
     }));
     console.log(`Removed column at index: ${index}`);
   };
@@ -283,9 +325,9 @@ function EditForm({ nodeData, position, onSubmit, onClose }) {
   // FIXED: Handle input changes dengan better event handling
   const handleTableNameChange = (e) => {
     e.stopPropagation();
-    setFormData(prev => ({ 
-      ...prev, 
-      TableName: e.target.value 
+    setFormData((prev) => ({
+      ...prev,
+      TableName: e.target.value,
     }));
   };
 
@@ -321,7 +363,9 @@ function EditForm({ nodeData, position, onSubmit, onClose }) {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", marginBottom: "4px", fontSize: "14px" }}>
+          <label
+            style={{ display: "block", marginBottom: "4px", fontSize: "14px" }}
+          >
             Table Name:
           </label>
           <input
@@ -428,7 +472,9 @@ function EditForm({ nodeData, position, onSubmit, onClose }) {
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+        <div
+          style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
+        >
           <button
             type="button"
             onClick={(e) => {
