@@ -63,7 +63,7 @@ export default function FormRequest({ onClose, onSubmit, nodes }) {
         columns: [
           { name: "id", type: "INT", index: "@id" },
           { name: "users_id", type: "INT", index: "@FK" },
-          { name: "product_id", type: "INT", index: "@FK" },
+          { name: "items_id", type: "INT", index: "@FK" },
           { name: "quantity", type: "INT" },
         ],
       },
@@ -113,7 +113,7 @@ export default function FormRequest({ onClose, onSubmit, nodes }) {
       position: { x: 800, y: 0 },
       type: "table",
       data: {
-        tableName: "order",
+        tableName: "orders",
         columns: [
           { name: "id", type: "INT", index: "@id" },
           { name: "users_id", type: "INT", index: "@FK" },
@@ -130,6 +130,7 @@ export default function FormRequest({ onClose, onSubmit, nodes }) {
         columns: [
           { name: "id", type: "INT", index: "@id" },
           { name: "items_id", type: "INT", index: "@FK" },
+          { name: "orders_id", type: "INT", index: "@FK" },
           { name: "price", type: "DECIMAL" },
           { name: "quantity", type: "INT" },
         ],
